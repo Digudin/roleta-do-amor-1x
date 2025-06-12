@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+ <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roleta da Sorte Mística</title>
+  <style>
+    body {
+    position: relative;
+    background: #111 url('https://wallpapers.com/images/hd/tattoo-background-e3kz48tcebllcbtp.jpg') no-repeat center center fixed;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    text-align: center;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 0;
+  }
+
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  canvas {
+    border: 4px solid #FFD700;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    background-color: #1a1a1a;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 2.5em;
+    color: #FFD700;
+    margin-bottom: 10px;
+  }
+
+  button {
+    background-color: #8B0000;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    margin: 10px;
+    font-size: 1.2em;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background-color 0.3s;
+  }
+
+  button:hover {
+    background-color: #a60000;
+  }
+
+  #result {
+    margin-top: 20px;
+    font-size: 1.5em;
+    color: #32CD32;
+    min-height: 3em;
+  }
+
+  @media (max-width: 500px) {
+    canvas {
+      width: 90vw;
+      height: auto;
+    }
+
+    button {
+      font-size: 1em;
+    }
+
+    h1 {
+      font-size: 1.4em;
+    }
+
+    #result {
+      font-size: 1em;
+    }
+  }
+  </style>
+</head>
+<body>
+
+<h1>🧡 Roleta do Amor 🧡</h1>
+<canvas id="wheel" width="500" height="500"></canvas>
+<button id="spinBtn">Girar o Destino</button>
+<div id="result"></div>
+
+<audio id="spinSound" src="girar.mp3"></audio>
+<audio id="bgMusic" src="ambiente.mp3" autoplay loop></audio>
+
+<script>
+  const options = [
+    " Tattoo BRINDE (10cm) ✨",
+    " 50% tattoo (7cm) 🔥",
+    " 30% QUALQUER TATTOO 💀",
+    " 20% tattoo (7cm) 🐍",
+    " 70% tattoo (7cm) 🎲",
+    " Desenho Autoral 🌙",
+    " R$50 próxima tattoo 🕯️",
+    " Nada rsrs 🦋",
+  ];
+
+  const probabilities = [0.01, 0.1, 0.19, 0.3, 0.05, 0.1, 0.2, 0.05];
+
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const spinBtn = document.getElementById('spinBtn');
+  const resultDiv = document.getElementById('result');
+  const spinSound = document.getElementById('spinSound');
+
+  let angle = 0;
+  let isSpinning = false;
+
+  function drawWheel() {
+    const numOptions = options.length;
+    const arcSize = (2 * Math.PI) / numOptions;
+
+    for (let i = 0; i < numOptions; i++) {
+      const startAngle = angle + i * arcSize;
+      const endAngle = startAngle + arcSize;
+
+      ctx.beginPath();
+      ctx.moveTo(250, 250);
+      ctx.arc(250, 250, 240, startAngle, endAngle);
+      ctx.fillStyle = i % 2 === 0 ? '#222' : '#333';
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(250, 250);
+      ctx.rotate(startAngle + arcSize / 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(options[i], 230, 5);
+      ctx.restore();
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(250, 0);
+    ctx.lineTo(240, 30);
+    ctx.lineTo(260, 30);
+    ctx.closePath();
+    ctx.fillStyle = '#FF0000';
+    ctx.fill();
+  }
+
+  function getRandomOption() {
+    const rand = Math.random();
+    let cumulative = 0;
+    for (let i = 0; i < probabilities.length; i++) {
+      cumulative += probabilities[i];
+      if (rand < cumulative) return i;
+    }
+    return probabilities.length - 1;
+  }
+
+  function spinWheel() {
+    if (isSpinning) return;
+    isSpinning = true;
+    spinSound.play();
+
+    const selectedOption = getRandomOption();
+    const arcSize = (2 * Math.PI) / options.length;
+    const targetAngle = (3 * Math.PI / 2) - (selectedOption * arcSize + arcSize / 2);
+    const rotations = 6;
+    const finalAngle = (rotations * 2 * Math.PI) + targetAngle;
+
+    const duration = 5000;
+    const start = performance.now();
+
+    function animateSpin(time) {
+      const elapsed = time - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      angle = easedProgress * finalAngle;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawWheel();
+
+      if (progress < 1) {
+        requestAnimationFrame(animateSpin);
+      } else {
+        isSpinning = false;
+        showResult(selectedOption);
+      }
+    }
+
+    requestAnimationFrame(animateSpin);
+  }
+
+  function showResult(index) {
+    const selectedOption = options[index];
+    resultDiv.innerHTML = `🤍 Resultado: <strong>${selectedOption}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
+    
+    localStorage.setItem('roletaGirou', 'true');
+    localStorage.setItem('resultadoRoleta', selectedOption);
+    spinBtn.style.display = 'none';
+
+    setTimeout(() => sendToWhatsApp(selectedOption), 2000);
+  }
+
+  function sendToWhatsApp(resultado) {
+    const phone = '5521985978795';
+    const message = `Meu prêmio da roleta: ${resultado}`;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.location.href = url;
+  }
+
+  function reenviarWhatsapp() {
+    const resultado = localStorage.getItem('resultadoRoleta') || 'Indefinido';
+    sendToWhatsApp(resultado);
+  }
+
+  drawWheel();
+
+  // Verificação se já girou
+  if (localStorage.getItem('roletaGirou') === 'true') {
+    spinBtn.style.display = 'none';
+    const resultado = localStorage.getItem('resultadoRoleta') || 'Indefinido';
+    resultDiv.innerHTML = `🤍 Resultado: <strong>${resultado}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
+  }
+
+  spinBtn.addEventListener('click', () => {
+    resultDiv.textContent = '';
+    spinWheel();
+  });
+</script>
+</body>
+</html>
