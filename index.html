@@ -150,6 +150,7 @@
       ctx.restore();
     }
 
+    // Setinha vermelha
     ctx.beginPath();
     ctx.moveTo(250, 0);
     ctx.lineTo(240, 30);
@@ -205,13 +206,21 @@
 
   function showResult(index) {
     const selectedOption = options[index];
-    resultDiv.innerHTML = `🤍 Resultado: <strong>${selectedOption}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
-    
+
+    // Armazena o resultado no localStorage
     localStorage.setItem('roletaGirou', 'true');
     localStorage.setItem('resultadoRoleta', selectedOption);
+
+    // Esconde o botão
     spinBtn.style.display = 'none';
 
-    setTimeout(() => sendToWhatsApp(selectedOption), 2000);
+    // Mostra o resultado
+    resultDiv.innerHTML = `🤍 Resultado: <strong>${selectedOption}</strong> 🤍`;
+
+    // Aguarda um tempo e envia automaticamente para o WhatsApp
+    setTimeout(() => {
+      sendToWhatsApp(selectedOption);
+    }, 1500);
   }
 
   function sendToWhatsApp(resultado) {
@@ -228,17 +237,25 @@
 
   drawWheel();
 
-  // Verificação se já girou
+  // Checa se já girou
   if (localStorage.getItem('roletaGirou') === 'true') {
     spinBtn.style.display = 'none';
     const resultado = localStorage.getItem('resultadoRoleta') || 'Indefinido';
     resultDiv.innerHTML = `🤍 Resultado: <strong>${resultado}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
   }
 
+  // Botão de girar
   spinBtn.addEventListener('click', () => {
-    resultDiv.textContent = '';
-    spinWheel();
+    if (localStorage.getItem('roletaGirou') === 'true') {
+      const resultado = localStorage.getItem('resultadoRoleta') || 'Indefinido';
+      resultDiv.innerHTML = `🤍 Resultado: <strong>${resultado}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
+      spinBtn.style.display = 'none';
+    } else {
+      resultDiv.textContent = '';
+      spinWheel();
+    }
   });
 </script>
+
 </body>
 </html>
