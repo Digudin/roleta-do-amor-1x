@@ -150,7 +150,6 @@
       ctx.restore();
     }
 
-    // Setinha vermelha
     ctx.beginPath();
     ctx.moveTo(250, 0);
     ctx.lineTo(240, 30);
@@ -171,7 +170,7 @@
   }
 
   function spinWheel() {
-    if (isSpinning) return;
+    if (isSpinning || localStorage.getItem('roletaGirou') === 'true') return;
     isSpinning = true;
     spinSound.play();
 
@@ -206,21 +205,13 @@
 
   function showResult(index) {
     const selectedOption = options[index];
-
-    // Armazena o resultado no localStorage
+    resultDiv.innerHTML = `🤍 Resultado: <strong>${selectedOption}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
+    
     localStorage.setItem('roletaGirou', 'true');
     localStorage.setItem('resultadoRoleta', selectedOption);
-
-    // Esconde o botão
     spinBtn.style.display = 'none';
 
-    // Mostra o resultado
-    resultDiv.innerHTML = `🤍 Resultado: <strong>${selectedOption}</strong> 🤍`;
-
-    // Aguarda um tempo e envia automaticamente para o WhatsApp
-    setTimeout(() => {
-      sendToWhatsApp(selectedOption);
-    }, 1500);
+    setTimeout(() => sendToWhatsApp(selectedOption), 2000);
   }
 
   function sendToWhatsApp(resultado) {
@@ -235,27 +226,32 @@
     sendToWhatsApp(resultado);
   }
 
-  drawWheel();
-
-  // Checa se já girou
-  if (localStorage.getItem('roletaGirou') === 'true') {
-    spinBtn.style.display = 'none';
-    const resultado = localStorage.getItem('resultadoRoleta') || 'Indefinido';
-    resultDiv.innerHTML = `🤍 Resultado: <strong>${resultado}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
-  }
-
-  // Botão de girar
-  spinBtn.addEventListener('click', () => {
+  function bloquearGiroSeJaFez() {
     if (localStorage.getItem('roletaGirou') === 'true') {
+      spinBtn.style.display = 'none';
       const resultado = localStorage.getItem('resultadoRoleta') || 'Indefinido';
       resultDiv.innerHTML = `🤍 Resultado: <strong>${resultado}</strong> 🤍<br><br>⚠️ Você já girou a roleta!<br><button onclick="reenviarWhatsapp()">Compartilhar resultado com o Piva</button>`;
-      spinBtn.style.display = 'none';
-    } else {
-      resultDiv.textContent = '';
-      spinWheel();
+    }
+  }
+
+  // Desenha a roleta ao entrar
+  drawWheel();
+  bloquearGiroSeJaFez();
+
+  // Impede novo giro se já girou
+  spinBtn.addEventListener('click', () => {
+    resultDiv.textContent = '';
+    spinWheel();
+  });
+
+  // Detecta se a pessoa voltou pra página (ex: botão de voltar do navegador)
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
+      bloquearGiroSeJaFez();
     }
   });
 </script>
+
 
 </body>
 </html>
